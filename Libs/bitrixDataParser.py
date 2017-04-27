@@ -21,12 +21,13 @@ def parseData(someFile):
     counter = 0
     for i in range(len(splitted_1)):
         item = {}
+        item['Товарные группы'] = {}
         for brand in BRANDS:
             if brand in splitted_1[i][0]:
                 item['Бренд'] = brand
                 temp = splitted_1[i][0].split(brand)
                 subtemp = temp[0].split(')')
-                item['ТГ2'] = subtemp[1].strip()
+                item['Товарные группы']['ТГ2'] = subtemp[1].strip()
                 item['Модель'] = temp[1].strip()
         try:
             item['Бренд']
@@ -39,11 +40,12 @@ def parseData(someFile):
             wasteArray.append(splitted_1[i])
     for item in splitted_2:
         skuData = OrderedDict()
-        skuData['ТГ2']      = item['ТГ2']
+        skuData['Товарные группы'] = {}
+        skuData['Товарные группы']['ТГ2']      = item['Товарные группы']['ТГ2']
         skuData['Артикул']  = item['Артикул']
         skuData['Бренд']    = item['Бренд']
         skuData['Модель']   = item['Модель']
         resultArray.append(skuData)
-    resultArray.sort(key = lambda k: k['ТГ2'])
+    resultArray.sort(key = lambda k: k['Товарные группы']['ТГ2'])
 
     return (resultArray, wasteArray)

@@ -6,6 +6,7 @@ from Libs.getBrands import getBrands
 from Libs.classSKU import *
 
 class SKUList:
+
     def __init__(self, someList = None):
         # Конструктор принимает в качестве аргумента список или кортеж. Если аргумент явно не передается, создается пустой
         # экземпляр, который в последствии может быть заполнен методом append
@@ -13,12 +14,37 @@ class SKUList:
         elif type(someList) == list:    self.array = someList
         elif not someList:              self.array = []
         else:                           raise TypeError ('Wrong data passed to SKUList constructor!')
+        self.counter = 0
         self.setupArticlesArray()
+# ========== Перегруженные методы ==========
+    def __str__(self):
+        # Метод строкового представления объекта списка товаров
+        result = ''
+        for item in self.array:
+            result += str(item)
+            result += '\n'
+        return result
+    def __len__(self):
+        # Перегружаем метод определения длины списка
+        return len(self.array)
+    def __iter__(self):
+        # Метод для реализации итерации списка SKU в цикле for
+        return self
+    def __next__(self):
+        # Метод, определяющий следующий элемент итерации
+        if self.counter < len(self.array):
+            self.counter += 1
+            return self.array[self.counter - 1]
+        else:
+            self.counter = 0
+            raise StopIteration
+# ========== Методы настройки объекта ==========
     def setupArticlesArray(self):
         # Метод создает отдельный список артикулов списка SKU для более быстрого поиска элементов по артикулу
         self.articlesArray = []
         for sku in self.array:
             self.articlesArray.append(sku.article)
+# ========== Методы изменения объекта ==========
     def append(self, item):
         # Метод добавления элемента в список. Элемент обязан быть либо экземпляром класса SKU, либо списком или кортежем
         # экземпляров этого класса. Так же item может быть другим объектом SKUList
@@ -51,6 +77,7 @@ class SKUList:
             self.articlesArray.remove(self.articlesArray[index])
         except:
             raise ValueError ('No such item in SKUList object!')
+# ========== Методы получения элементов и выборок ==========
     def getIndexByItem(self, item):
         # Метод возвращает индекс указанного SKU
         if type(item) != SKU: raise TypeError ('Non-SKU object passed to getIndexByItem() method')
@@ -79,15 +106,37 @@ class SKUList:
             return self.array[self.articlesArray.index(article)]
         except:
             return None
-    def __str__(self):
-        # Метод строкового представления объекта списка товаров
-        result = ''
-        for item in self.array:
-            result += str(item)
-            result += '\n'
-        return result
+    def getItemsByColor(self, color):
+        # Метод возвращает список SKU, имеющих цвет color
+        colorArray = [item for item in self.array if item.color.upper() == color.upper()]
+        return SKUList(colorArray)
+    def getItemsByBrand(self, brand):
+        # Метод возвращает список SKU, имеющих бренд brand
+        brandArray = [item for item in self.array if item.brand.upper() == brand.upper()]
+        return SKUList(brandArray)
+    def getItemsByGroup(self, groupName = "", groupType = None):
+        # Метод возвращает спикок SKU, имеющих указанную товарную группу. В атрибуте groupName указывается наименование
+        # товарной группы, в атрибуте groupType указывается порядковый номер ТГ (от 1 до 5)
+        resultArray = []
+        if groupName and not groupType:
+            for item in self.array:
+                groups = []
+                for value in item.TG.values():
+                    if value: groups.append(value.upper())
+                if groupName.upper() in groups:
+                    resultArray.append(item)
+        if groupType and not groupName:
+            for item in self.array:
+                if item.TG['ТГ{}'.format(groupType)]: resultArray.append(item)
+        if groupType and groupName:
+            for item in self.array:
+                if item.TG['ТГ{}'.format(groupType)].upper() == groupName.upper():
+                    resultArray.append(item)
+                    print(item.TG['ТГ{}'.format(groupType)].upper())
+        return SKUList(resultArray)
+# ========== Методы класса ==========
     @classmethod
-    def fromExcel(cls, excelFile, gg1, gg2):
+    def fromExcel(cls, excelFile, tg1, tg2):
         # Метод класса, создающий список SKU на основе предоставленной таблицы excel
         try:    workBook = openpyxl.load_workbook(excelFile)
         except: raise ValueError ('No Excel file {} found!'.format(excelFile))
@@ -100,13 +149,21 @@ class SKUList:
         elementsList = []
         for row in workSheet.iter_rows(min_row = 2):
             skuData = {}
-            skuData['ТГ1'] = gg1
-            skuData['ТГ2'] = gg2
+            skuData['Товарные группы'] = {}
+            skuData['Товарные группы']['ТГ1'] = tg1
+            skuData['Товарные группы']['ТГ2'] = tg2
+            if row[headers['Товарная Группа 3']].value: skuData['Товарные группы']['ТГ3'] = row[headers['Товарная Группа 3']].value.strip().upper()
+            if row[headers['Товарная Группа 4']].value: skuData['Товарные группы']['ТГ4'] = row[headers['Товарная Группа 4']].value.strip().upper()
+            if row[headers['Товарная Группа 5']].value: skuData['Товарные группы']['ТГ5'] = row[headers['Товарная Группа 5']].value.strip().upper()
             skuData['Артикул'] = row[headers['Артикул']].value.strip().upper()
             nameData = row[headers['Название']].value.upper()
             for brand in BRANDS:
                 if brand in nameData:
                     skuData['Бренд'] = brand
                     skuData['Модель'] = nameData.split(brand)[-1].strip()
+            skuData['Цвет'] = row[headers['Цвет']].value.strip().upper()
+            remainParameters = []
+            for header in headers.keys():
+                if header.upper() not in []
             elementsList.append(SKU.fromData(skuData))
         return cls(elementsList)
