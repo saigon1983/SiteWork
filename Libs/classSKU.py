@@ -43,7 +43,7 @@ class SKU:
     def setupParameters(self, parameters):
         # Метод установки параметров для SKU. На вход подается словарь параметров <Наименование поля>=<Значение>
         self.parameters = {}
-        for key, value in parameters: self.parameters[key] = value
+        for key, value in parameters.items(): self.parameters[key] = value
 # ========== Методы класса ==========
     @classmethod
     def fromData(cls, data):
@@ -68,6 +68,10 @@ class SKU:
         except: tradeGroups['ТГ4'] = ''
         try:    tradeGroups['ТГ5'] = data['Товарные группы']['ТГ5']
         except: tradeGroups['ТГ5'] = ''
+        try:
+            for key, value in data['Параметры'].items():
+                parameters[key] = value
+        except: parameters  = {}
         return cls(model        = model,
                    article      = article,
                    brand        = brand,

@@ -6,6 +6,10 @@ from Libs.getBrands import getBrands
 from Libs.classSKU import *
 
 class SKUList:
+    IGNORE_HEADERS = ('ТОВАРНАЯ ГРУППА 3','ТОВАРНАЯ ГРУППА 4','ТОВАРНАЯ ГРУППА 5','НАЗВАНИЕ','АРТИКУЛ','ТИП ТОВАРА',
+                      'КОЭФ.',"ЕД. ИЗМЕРЕНИЯ", "ЗАРЕЗЕРВИРОВАНО", "ДАТА ИЗМ.", "АКТИВНОСТЬ", "СОРТ.", "ID",
+                      "УМЕНЬШАТЬ КОЛИЧЕСТВО ПРИ ЗАКАЗЕ", "ДОСТУПНОЕ КОЛИЧЕСТВО", "ДОСТУПНОСТЬ", "КОЛИЧЕСТВО ПОДПИСОК",
+                      "НЕТ СИЦ", "ЦВЕТ")
 
     def __init__(self, someList = None):
         # Конструктор принимает в качестве аргумента список или кортеж. Если аргумент явно не передается, создается пустой
@@ -77,6 +81,16 @@ class SKUList:
             self.articlesArray.remove(self.articlesArray[index])
         except:
             raise ValueError ('No such item in SKUList object!')
+    def removeAllByArticle(self, article):
+        # Метод удаляет ВСЕ элементы списка, идетничные указанному элементу item
+        try:
+            finds = self.articlesArray.count(article)
+            for i in range(finds):
+                index = self.articlesArray.index(article)
+                self.articlesArray.remove(article)
+                self.array.remove(self.array[index])
+        except:
+            raise ValueError ('No SKU with article {} in SKUList object!'.format(article))
 # ========== Методы получения элементов и выборок ==========
     def getIndexByItem(self, item):
         # Метод возвращает индекс указанного SKU
@@ -149,7 +163,8 @@ class SKUList:
         elementsList = []
         for row in workSheet.iter_rows(min_row = 2):
             skuData = {}
-            skuData['Товарные группы'] = {}
+            skuData['Товарные группы']  = {}
+            skuData['Параметры']        = {}
             skuData['Товарные группы']['ТГ1'] = tg1
             skuData['Товарные группы']['ТГ2'] = tg2
             if row[headers['Товарная Группа 3']].value: skuData['Товарные группы']['ТГ3'] = row[headers['Товарная Группа 3']].value.strip().upper()
@@ -162,8 +177,10 @@ class SKUList:
                     skuData['Бренд'] = brand
                     skuData['Модель'] = nameData.split(brand)[-1].strip()
             skuData['Цвет'] = row[headers['Цвет']].value.strip().upper()
-            remainParameters = []
             for header in headers.keys():
-                if header.upper() not in []
+                if header.upper() not in cls.IGNORE_HEADERS:
+                    value = row[headers[header]].value
+                    if value: value = value.strip()
+                    skuData['Параметры'][header] = value
             elementsList.append(SKU.fromData(skuData))
         return cls(elementsList)
