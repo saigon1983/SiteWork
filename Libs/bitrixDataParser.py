@@ -17,35 +17,15 @@ def parseData(someFile):
     for line in data:
         splitted_1.append(line.strip().upper().split('-----'))
     # Производим второе разделение по названию бренда
-    splitted_2 = []
-    counter = 0
     for i in range(len(splitted_1)):
-        item = {}
-        item['Товарные группы'] = {}
+        skuData = {}
+        skuData['Название'] = splitted_1[i][0].split(')')[1].strip()
+        skuData['Артикул']  = splitted_1[i][1].strip()
         for brand in BRANDS:
-            if brand in splitted_1[i][0]:
-                item['Бренд'] = brand
-                temp = splitted_1[i][0].split(brand)
-                subtemp = temp[0].split(')')
-                item['Товарные группы']['ТГ2'] = subtemp[1].strip()
-                item['Модель'] = temp[1].strip()
-        try:
-            item['Бренд']
-            if not splitted_1[i][1].strip():
-                item['Артикул'] = item['Модель']
+            if brand not in skuData['Название']:
+                wasteArray.append(skuData)
             else:
-                item['Артикул'] = splitted_1[i][1].strip()
-            splitted_2.append(item)
-        except:
-            wasteArray.append(splitted_1[i])
-    for item in splitted_2:
-        skuData = OrderedDict()
-        skuData['Товарные группы'] = {}
-        skuData['Товарные группы']['ТГ2']      = item['Товарные группы']['ТГ2']
-        skuData['Артикул']  = item['Артикул']
-        skuData['Бренд']    = item['Бренд']
-        skuData['Модель']   = item['Модель']
-        resultArray.append(skuData)
-    resultArray.sort(key = lambda k: k['Товарные группы']['ТГ2'])
+                resultArray.append(skuData)
+    resultArray.sort(key = lambda k: k['Название'])
 
     return (resultArray, wasteArray)

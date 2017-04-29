@@ -1,28 +1,52 @@
 # Модуль описывает класс SKU, который представляет из себя интерфейс товара - модели техники на продажу
+from Libs.getBrands import *
+from collections import OrderedDict
+from configobj import ConfigObj
 
 class SKU:
     CAPS_BRANDS = ('BORA', 'BORK', 'SMEG')
+    TG_TREE = ConfigObj('DataFolder\\tradeGroupsTree.ini')
+    TG_1 = TG_TREE.keys()
+    TG_2 = {}
+    for name in TG_1:
+        TG_2[name] = TG_TREE[name].keys()
     def __init__(self,
-                 model = '',
                  article = '',
-                 brand = '',
+                 name = '',
                  color = '',
                  tradeGroups = {},
-                 parameters = {}):
-        self.model = model
+                 parameters = OrderedDict()):
         self.article = article
-        self.setupBrand(brand)
+        self.parseName(name)
         self.setupTradeGroups(tradeGroups)
         self.color = color.lower()
         self.setupParameters(parameters)
 # ========== Перегруженные методы ==========
     def __str__(self):
         # Метод строковго представления объекта
-        return '{} {} {}'.format(self.TG['ТГ2'], self.brand, self.model)
+        return self.getName()
     def __eq__(self, other):
         # Метод поврехностного сравнения объектов. Две SKU считаются равными, если равны их артикулы
         return self.article == other.article
 # ========== Методы настройки объекта ==========
+    def parseName(self, nameData):
+        # Метод разбора переданного имени. Составляет из имени тип прибора, бренд и модель.
+        # TODO: релизовать автоматическое определение товарных групп по типу прибора (хотя бы ТГ2)
+        BRANDS = getBrands()
+        for brand in BRANDS:
+            if brand in nameData.upper():
+                someBrand   = brand
+                splitted    = nameData.split(brand)
+                self.model  = splitted[1].strip()
+                self.type   = splitted[0].strip().capitalize()
+        try:            someBrand
+        except:         someBrand   = ''
+        try:            self.model
+        except:         self.model   = ''
+        try:            self.type
+        except:         self.type   = ''
+        if not self.article: self.article = self.model
+        self.setupBrand(correctBrand(someBrand))
     def setupBrand(self, brand):
         # Метод корректировки написания бренда. Если бренд находится в указанном списке, то его имя пишется заглавными буквами
         if brand.upper() not in self.CAPS_BRANDS: self.brand = brand.title()
@@ -42,20 +66,23 @@ class SKU:
         except: self.TG['ТГ5'] = ''
     def setupParameters(self, parameters):
         # Метод установки параметров для SKU. На вход подается словарь параметров <Наименование поля>=<Значение>
-        self.parameters = {}
-        for key, value in parameters.items(): self.parameters[key] = value
+        self.parameters = OrderedDict()
+        for key, value in parameters.items():
+            self.parameters[key] = value
+# ========== Методы доступа к атрибутам объекта ==========
+    def getName(self):
+        # Метод возвращает составное имя объекта (тип прибора + бренд + модель)
+        return '{} {} {}'.format(self.type, self.brand, self.model)
 # ========== Методы класса ==========
     @classmethod
     def fromData(cls, data):
         # Метод класса создает экземпляр на основе некоторого набора данных, преданного методу
         tradeGroups = {}
         parameters  = {}
-        try:    model   = data['Модель']
-        except: model   = ''
+        try:    name    = data['Название']
+        except: name    = ''
         try:    article = data['Артикул']
         except: article = ''
-        try:    brand   = data['Бренд']
-        except: brand   = ''
         try:    color   = data['Цвет']
         except: color   = ''
         try:    tradeGroups['ТГ1'] = data['Товарные группы']['ТГ1']
@@ -72,9 +99,8 @@ class SKU:
             for key, value in data['Параметры'].items():
                 parameters[key] = value
         except: parameters  = {}
-        return cls(model        = model,
-                   article      = article,
-                   brand        = brand,
-                   tradeGroups  = tradeGroups,
+        return cls(article      = article,
+                   name = name,
                    color        = color,
+                   tradeGroups  = tradeGroups,
                    parameters   = parameters)
