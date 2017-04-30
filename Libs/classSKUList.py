@@ -253,7 +253,8 @@ class SKUList:
             for header in headers.keys():
                 if header.upper() not in cls.IGNORE_HEADERS:
                     value = row[headers[header]].value
-                    if value: value = value.strip()
+                    if value:
+                        if type(value) == str: value = value.strip()
                     skuData['Параметры'][header] = value
             elementsList.append(SKU.fromData(skuData))
         return cls(elementsList)
