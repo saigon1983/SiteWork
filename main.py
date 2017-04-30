@@ -11,6 +11,6 @@ SKUS2 = SKUList()
 for item in data2[0]:
     SKUS2.append(SKU.fromData(item))
 '''
-data = SKUList.fromExcel('DataFolder\\ExcelFiles\\Вытяжки ВСТР.xlsx', 'Встраиваемая техника', 'Вытяжки')
+data = SKUList.fromExcel('DataFolder\\ExcelFiles\\Вытяжки.xlsx', 'Встраиваемая техника', 'Вытяжки')
 
 data.saveAsExcel('table1')
