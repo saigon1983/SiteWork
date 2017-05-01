@@ -1,8 +1,10 @@
 # Класс SKUList представляет из себя список любого количества SKU. Для работы с классом предоставляются многие методы из
 # класса list, а так же некоторые свои специфические
 
-import openpyxl
+import openpyxl, os, pickle
 from Libs.classSKU import *
+
+
 
 class SKUList:
     IGNORE_HEADERS = ('ТОВАРНАЯ ГРУППА 3','ТОВАРНАЯ ГРУППА 4','ТОВАРНАЯ ГРУППА 5','НАЗВАНИЕ','АРТИКУЛ','ТИП ТОВАРА',
@@ -58,18 +60,12 @@ class SKUList:
         elif type(item) == SKUList:
             data = item.array
         elif type(item) == list:
-            for element in item:
-                if type(element) != SKU:
-                    raise TypeError ('Wrong data in list, that you try to append to SKUList!')
             data = item
         elif type(item) == tuple:
-            for element in item:
-                if type(element) != SKU:
-                    raise TypeError ('Wrong data in tuple, that you try to append to SKUList!')
             data = list(item)
         else:
             raise TypeError ('Wrong data passed to append() method of SKUList object!')
-        self.array == data
+        self.array += data
         for item in data:
             self.articlesArray.append(item.article)
     def remove(self, item):
@@ -93,7 +89,6 @@ class SKUList:
 # ========== Методы получения элементов и выборок ==========
     def getIndexByItem(self, item):
         # Метод возвращает индекс указанного SKU
-        if type(item) != SKU: raise TypeError ('Non-SKU object passed to getIndexByItem() method')
         try:
             return self.array.index(item)
         except:
@@ -174,19 +169,19 @@ class SKUList:
         for item in self.array:
             item.TG['ТГ1'] = TG
     def setTG2(self, TG):
-        # Метод устанавливает все элементам набора ТГ1 равную TG
+        # Метод устанавливает все элементам набора ТГ2 равную TG
         for item in self.array:
             item.TG['ТГ2'] = TG
     def setTG3(self, TG):
-        # Метод устанавливает все элементам набора ТГ1 равную TG
+        # Метод устанавливает все элементам набора ТГ3 равную TG
         for item in self.array:
             item.TG['ТГ3'] = TG
     def setTG4(self, TG):
-        # Метод устанавливает все элементам набора ТГ1 равную TG
+        # Метод устанавливает все элементам набора ТГ4 равную TG
         for item in self.array:
             item.TG['ТГ4'] = TG
     def setTG5(self, TG):
-        # Метод устанавливает все элементам набора ТГ1 равную TG
+        # Метод устанавливает все элементам набора ТГ5 равную TG
         for item in self.array:
             item.TG['ТГ5'] = TG
 # ========== Методы сохранения набора ==========
@@ -196,7 +191,7 @@ class SKUList:
         for item in self.array:
             if item.TG['ТГ2'] != tg2: return False
         return True
-    def saveAsExcel(self, filename):
+    def saveToExcel(self, filename):
         HEADERS = ['Артикул','Тип прибора','Бренд','Модель','ТГ1','ТГ2','ТГ3','ТГ4','ТГ5','Цвет']
         workBook = openpyxl.Workbook()
         workSheet = workBook.active
@@ -232,8 +227,8 @@ class SKUList:
         try:    workBook = openpyxl.load_workbook(excelFile)
         except: raise ValueError ('No Excel file {} found!'.format(excelFile))
         BRANDS = getBrands()
-        workSheet = workBook.get_active_sheet()
-        firstRow = workSheet[1]
+        workSheet   = workBook.get_active_sheet()
+        firstRow    = workSheet[1]
         headers = {}
         for header in firstRow:
             headers[header.value] = firstRow.index(header)
@@ -249,7 +244,7 @@ class SKUList:
             if row[headers['Товарная Группа 5']].value: skuData['Товарные группы']['ТГ5'] = row[headers['Товарная Группа 5']].value.strip().upper()
             skuData['Артикул'] = row[headers['Артикул']].value.strip().upper()
             skuData['Название'] = row[headers['Название']].value.upper()
-            skuData['Цвет'] = row[headers['Цвет']].value.strip().upper()
+            if row[headers['Цвет']].value: skuData['Цвет'] = row[headers['Цвет']].value.strip().upper()
             for header in headers.keys():
                 if header.upper() not in cls.IGNORE_HEADERS:
                     value = row[headers[header]].value
@@ -258,3 +253,27 @@ class SKUList:
                     skuData['Параметры'][header] = value
             elementsList.append(SKU.fromData(skuData))
         return cls(elementsList)
+
+class Database(SKUList):
+    # Класс Database представляет из себя обощенную базу всех известных SKU с некоторыми дополнительными методами доступа
+    def __init__(self):
+        super().__init__()
+    def saveDatabase(self):
+        with open('DataFolder\\database.db', 'wb') as databaseFile:
+            pickle.dump(self, databaseFile)
+    @classmethod
+    def loadDatabase(cls):
+        with open('DataFolder\\database.db', 'rb') as databaseFile:
+            DB = pickle.load(databaseFile)
+        return DB
+    @classmethod
+    def construct(cls):
+        newDatabase = Database()
+        for dirlist in os.walk('DataFolder\\ExcelFiles\\Product groups'):
+            for file in dirlist[-1]:
+                folderPath = dirlist[0]
+                tg1 = folderPath.split('\\')[-1]
+                tg2 = file[:-5]
+                newList = SKUList.fromExcel(os.path.join(folderPath,file), tg1, tg2)
+                newDatabase.append(newList)
+        return newDatabase

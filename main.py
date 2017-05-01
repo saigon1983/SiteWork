@@ -1,21 +1,22 @@
+import os, openpyxl
+
 from Libs.bitrixDataParser import *
 from Libs.classSKUList import *
+from string import ascii_letters
 from Libs.constructTable_parameters import constructParametersTable
 
-#data1 = parseData('DataFolder\\no_text.txt')
-data2 = parseData('DataFolder\\no_properties.txt')
-'''
-SKUS1 = SKUList()
-for item in data1[0]:
-    SKUS1.append(SKU.fromData(item))
-'''
+data1 = parseData('DataFolder\\no_text.txt')
+#data2 = parseData('DataFolder\\no_properties.txt')
 SKUS2 = SKUList()
-for item in data2[0]:
+for item in data1[0]:
     SKUS2.append(SKU.fromData(item))
+newBase = Database.loadDatabase()
+#newBase = Database.construct()
+#newBase.saveDatabase()
 
-#data = SKUList.fromExcel('DataFolder\\ExcelFiles\\Product groups\\Встраиваемая техника\\Вытяжки.xlsx', 'Встраиваемая техника', 'Вытяжки')
-
-#data.saveAsExcel('table1')
-
+i = 0
+j = 0
 for item in SKUS2:
-    print(item, item.TG['ТГ1'], item.TG['ТГ2'])
+    item.fillFromDatabase(newBase)
+print(i)
+print(j)
