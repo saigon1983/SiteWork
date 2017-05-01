@@ -1,5 +1,6 @@
 # Модуль описывает класс SKU, который представляет из себя интерфейс товара - модели техники на продажу
 from Libs.getBrands import *
+from Libs.detectTG import *
 from collections import OrderedDict
 from configobj import ConfigObj
 
@@ -54,6 +55,8 @@ class SKU:
     def setupTradeGroups(self, tradeGroups):
         # Метод установки значений товарных групп. На вход подается словарь параметров с ключами пяти товарных групп
         self.TG = {}
+        self.TG['ТГ1'], self.TG['ТГ2'] = detectTG(self)
+        '''
         try:    self.TG['ТГ1'] = tradeGroups['ТГ1'].capitalize()
         except: self.TG['ТГ1'] = ''
         try:    self.TG['ТГ2'] = tradeGroups['ТГ2'].capitalize()
@@ -64,6 +67,7 @@ class SKU:
         except: self.TG['ТГ4'] = ''
         try:    self.TG['ТГ5'] = tradeGroups['ТГ5'].lower()
         except: self.TG['ТГ5'] = ''
+        '''
     def setupParameters(self, parameters):
         # Метод установки параметров для SKU. На вход подается словарь параметров <Наименование поля>=<Значение>
         self.parameters = OrderedDict()
