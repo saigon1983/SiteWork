@@ -18,5 +18,7 @@ i = 0
 j = 0
 for item in SKUS2:
     item.fillFromDatabase(newBase)
+for item in SKUS2:
+    item.getInfo()
 print(i)
 print(j)

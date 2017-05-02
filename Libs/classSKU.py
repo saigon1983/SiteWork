@@ -63,7 +63,7 @@ class SKU:
         else: self.brand = brand.upper()
     def setupTradeGroups(self, tradeGroups):
         # Метод установки значений товарных групп. На вход подается словарь параметров с ключами пяти товарных групп
-        self.TG = {}
+        self.TG = OrderedDict()
         try:    self.TG['ТГ1'] = tradeGroups['ТГ1'].capitalize()
         except: self.TG['ТГ1'] = ''
         try:    self.TG['ТГ2'] = tradeGroups['ТГ2'].capitalize()
@@ -86,6 +86,15 @@ class SKU:
     def getName(self):
         # Метод возвращает составное имя объекта (тип прибора + бренд + модель)
         return '{} {} {}'.format(self.type, self.brand, self.model)
+    def getInfo(self):
+        # Метод возвращает строковую информацию об SKU
+        print('==========')
+        print(self.getName())
+        for tg in self.TG:
+            if self.TG[tg]: print('|{}:'.format(tg), self.TG[tg], end = '')
+        print()
+        for param in self.parameters:
+            print('{}: {}'.format(param, self.parameters[param]))
     def fillFromDatabase(self, database):
         # Метод заполняет доступные поля, если товар с этими полями найден в базе данных
         if self.article in database.articlesArray:
